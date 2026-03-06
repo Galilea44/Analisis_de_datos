@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+<meta charset="UTF-8">
+<title>Dashboard Académico</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Chart.js con defer -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+
+<!-- Script propio con defer -->
+<script defer>
+const materiasLabels = {{ materias_labels | tojson }};
+const materiasDatos = {{ materias_datos | tojson }};
+
+const carrerasLabels = {{ carreras_labels | tojson }};
+const carrerasDatos = {{ carreras_datos | tojson }};
+
+const tendenciaLabels = {{ tendencia_labels | tojson }};
+const tendenciaDatos = {{ tendencia_datos | tojson }};
+
+function crearGraficas() {
+    // Materias
+    new Chart(document.getElementById("graficaMaterias"), {
+        type: "bar",
+        data: {
+            labels: materiasLabels,
+            datasets: [{
+                label: "Reprobación (%)",
+                data: materiasDatos,
+                backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                borderColor: 'rgba(239, 68, 68, 1)',
+                borderWidth: 1,
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // Carreras
+    new Chart(document.getElementById("graficaCarreras"), {
+        type: "bar",
+        data: {
+            labels: carrerasLabels,
+            datasets: [{
+                label: "Promedio",
+                data: carrerasDatos,
+                backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 1,
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // Tendencias
+    new Chart(document.getElementById("graficaTendencias"), {
+        type: "line",
+        data: {
+            labels: tendenciaLabels,
+            datasets: [{
+                label: "Promedio",
+                data: tendenciaDatos,
+                borderColor: 'rgba(16, 185, 129, 1)',
+                backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: true } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+}
+
+window.addEventListener("load", crearGraficas);
+</script>
+
+</head>
+
+<body class="bg-slate-100 text-slate-800">
+
+<div class="max-w-7xl mx-auto p-8">
+
+<h1 class="text-3xl font-bold mb-8">Dashboard Académico</h1>
+
+<!-- BOTONES POR AÑO -->
+<div class="flex gap-3 mb-6">
+    <a href="/dashboard" class="bg-gray-200 px-4 py-2 rounded-lg">Todos</a>
+    <a href="/dashboard/2022" class="bg-blue-500 text-white px-4 py-2 rounded-lg">2022</a>
+    <a href="/dashboard/2023" class="bg-blue-500 text-white px-4 py-2 rounded-lg">2023</a>
+    <a href="/dashboard/2024" class="bg-blue-500 text-white px-4 py-2 rounded-lg">2024</a>
+</div>
+
+<!-- TARJETAS -->
+<div class="grid grid-cols-3 gap-6 mb-10">
+    <div class="bg-white p-6 rounded-xl shadow">
+        <p class="text-gray-500">Promedio General</p>
+        <h2 class="text-3xl font-bold">{{ promedio_general }}</h2>
+    </div>
+
+    <div class="bg-white p-6 rounded-xl shadow">
+        <p class="text-gray-500">Tasa de Reprobación</p>
+        <h2 class="text-3xl font-bold">{{ tasa_reprobacion }}%</h2>
+        <p class="text-red-500 text-sm mt-2">Mayor: {{ materia_mayor_reprobacion }}</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-xl shadow">
+        <p class="text-gray-500">Alumnos en Riesgo</p>
+        <h2 class="text-3xl font-bold">{{ riesgo_total }}</h2>
+    </div>
+</div>
+
+<!-- MATERIAS CON MAYOR REPROBACION -->
+<div class="bg-white p-6 rounded-xl shadow mb-10">
+    <h2 class="text-xl font-bold mb-4">Materias con mayor reprobación</h2>
+    <div class="w-full h-64 md:h-80 lg:h-96">
+        <canvas id="graficaMaterias"></canvas>
+    </div>
+</div>
+
+<!-- CARRERAS -->
+<div class="bg-white p-6 rounded-xl shadow mb-10">
+    <h2 class="text-xl font-bold mb-4">Carreras con mayor promedio</h2>
+    <div class="w-full h-64 md:h-80 lg:h-96">
+        <canvas id="graficaCarreras"></canvas>
+    </div>
+</div>
+
+<!-- TENDENCIAS -->
+<div class="bg-white p-6 rounded-xl shadow mb-10">
+    <h2 class="text-xl font-bold mb-4">Tendencias por semestre</h2>
+    <div class="w-full h-64 md:h-80 lg:h-96 mb-6">
+        <canvas id="graficaTendencias"></canvas>
+    </div>
+
+    <table class="w-full">
+        <thead>
+            <tr class="border-b">
+                <th class="text-left p-2">Año</th>
+                <th class="text-left p-2">Semestre</th>
+                <th class="text-left p-2">Promedio</th>
+                <th class="text-left p-2">Estudiantes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in tendencias %}
+            <tr class="border-b">
+                <td class="p-2">{{ t["año"] }}</td>
+                <td class="p-2">{{ t["semestre"] }}</td>
+                <td class="p-2">{{ t["promedio"] }}</td>
+                <td class="p-2">{{ t["estudiantes"] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- ALUMNOS EN RIESGO -->
+<div class="bg-white p-6 rounded-xl shadow mb-10">
+    <h2 class="text-xl font-bold mb-4">Alumnos en riesgo</h2>
+    <table class="w-full">
+        <thead>
+            <tr class="border-b">
+                <th class="text-left p-2">ID</th>
+                <th class="text-left p-2">Carrera</th>
+                <th class="text-left p-2">Materia</th>
+                <th class="text-left p-2">Calificación</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for alumno in alumnos_riesgo %}
+            <tr class="border-b">
+                <td class="p-2">{{ alumno["id"] }}</td>
+                <td class="p-2">{{ alumno["carrera"] }}</td>
+                <td class="p-2">{{ alumno["materia"] }}</td>
+                <td class="p-2 text-red-600 font-bold">{{ alumno["calificacion"] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+</div>
+
+</body>
+</html>
