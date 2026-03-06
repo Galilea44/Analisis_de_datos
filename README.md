@@ -1,2 +1,4 @@
-# Analisis_de_datos
-Repositorio para habilidades
+# Integrantes
+González Arias Alexandra Galilea
+Iturbide Amador Fernando
+Rojas Herrera Ricardo
